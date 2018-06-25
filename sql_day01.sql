@@ -1,4 +1,4 @@
--- sql day01
+﻿-- sql day01
 
 -- 01. DQL 
 SELECT sysdate 
