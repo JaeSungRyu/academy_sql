@@ -1,0 +1,6 @@
+--sql day03
+
+--01. DQL
+SELECT sysdate
+from dual
+;
