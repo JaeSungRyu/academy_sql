@@ -245,9 +245,166 @@ CLERK
 ANALYST
 */
 
+-- (5) WHERE 조건절
+--  16) emp 테이블에서 empno 이 7900인 사원의
+--      사번, 이름, 직무, 입사일, 급여, 부서번호 조회
+SELECT e.EMPNO
+      ,e.ENAME
+      ,e.JOB
+      ,e.HIREDATE
+      ,e.SAL
+      ,e.DEPTNO
+  FROM emp e
+ WHERE e.EMPNO = 7900  
+;  
+/*
+EMPNO, ENAME, JOB, HIREDATE, SAL, DEPTNO
+------------------------------------------
+7900	JAMES	CLERK	81/12/03	950	30
+*/
+
+
+--  17) emp 테이블에서 empno 는 7900 이거나 deptno 가 20인 직원의 정보를 
+--      사번, 이름, 직무, 입사일, 급여, 부서번호만 조회
+SELECT e.EMPNO
+     , e.ENAME
+     , e.JOB
+     , e.HIREDATE
+     , e.SAL
+     , e.DEPTNO
+  FROM emp e
+ WHERE e.EMPNO = 7900
+    OR e.DEPTNO = 20
+;  
+
+/*
+EMPNO, ENAME, JOB, HIREDATE, SAL, DEPTNO
+----------------------------------------------
+7369	SMITH	CLERK	80/12/17	800	    20
+7566	JONES	MANAGER	81/04/02	2975	20
+7900	JAMES	CLERK	81/12/03	950	    30
+7902	FORD	ANALYST	81/12/03	3000	20
+*/
+--  18) 17번의 조회조건을 AND 조건으로 조합
+--      empno 가 7900 이고 deptno 가 20인 직원의 정보를 조회
+
+SELECT e.EMPNO
+     , e.ENAME
+     , e.JOB
+     , e.HIREDATE
+     , e.SAL
+     , e.DEPTNO
+  FROM emp e
+ WHERE e.EMPNO = 7900
+   AND e.DEPTNO = 20
+;  
+-- 인출된 모든 행 : 0
+
+
+--- 19) job 이 'CLERK' 이면서 deptno 가 10인 직원의 
+--      사번, 이름, 직무, 부서번호를 조회
+SELECT e.EMPNO
+      ,e.ENAME
+      ,e.JOB
+      ,e.DEPTNO
+  FROM emp e
+ WHERE e.JOB = 'CLERK' -- 문자값 비교시 '' 사용, 문자값은 대소문자 구분
+   AND e.DEPTNO = 10   -- 숫자값 비교시 따옴표 사용안함   
+;  
+
+--- 20) 19번에서 직무 비교 값을 소문자 clerk 과 비교하여 결과를 확인
+SELECT e.EMPNO
+      ,e.ENAME
+      ,e.JOB
+      ,e.DEPTNO
+  FROM emp e
+ WHERE e.JOB = 'clerk' -- 문자값 비교시 '' 사용, 문자값은 대소문자 구분
+   AND e.DEPTNO = 10   -- 숫자값 비교시 따옴표 사용안함   
+;  
+
+-- 소문자 clerk 로 저장된 직무는 존재하지 않으므로 조건에 맞는 행이 없음
+-- 인출된 모든 행 : 0 결과가 발생함
 
 
 
+-- (6) 연산자 1. 산술연산자
+--- 21) 사번, 이름, 급여를 조회하고, 급여의 3.3% 에 해당하는 원천징수 세금을 계산하여 조회
+SELECT e.EMPNO 사번
+     , e.ENAME 이름
+     , e.SAL   급여
+     , e.SAL * 0.033 원천징수세금
+  FROM emp e
+;  
+--    실수령액에 해당하는 96.7%의 급여도 계산하여 조회
+SELECT e.EMPNO 사번
+     , e.ENAME 이름
+     , e.SAL   급여
+     , e.SAL * 0.033 원천징수세금
+     , e.SAL * 0.967 실수령액
+  FROM emp e
+;  
+
+-- 동일결과를 내는 다른 계산
+SELECT e.EMPNO 사번
+     , e.ENAME 이름
+     , e.SAL   급여
+     , e.SAL * 0.033 원천징수세금
+     , e.SAL - (e.SAL * 0.033) 실수령액
+  FROM emp e
+;  
+
+-- 동일결과를 내는 다른 계산
+SELECT e.EMPNO 사번
+     , e.ENAME 이름
+     , e.SAL   급여
+     , e.SAL * 0.033 원천징수세금
+     , e.SAL * (1 - 0.033) 실수령액
+  FROM emp e
+;  
+
+-- (6) 연산자 2. 비교연산자
+--     비교연산자는 SELECT 절에 사용할 수 없음
+--     WHERE, HAVING 절에만 사용함
+
+--- 22) 급여가 2000이 넘는 직원의 사번, 이름, 급여를 조회
+SELECT e.EMPNO
+     , e.ENAME
+     , e.SAL
+  FROM emp e
+ WHERE e.SAL > 2000 
+;  
+
+---    급여가 1000 이상인 직원의 사번, 이름, 급여를 조회
+SELECT e.EMPNO
+     , e.ENAME
+     , e.SAL
+  FROM emp e
+ WHERE e.SAL >= 1000
+;  
+
+---    급여가 1000이상이며 2000미만인 직원 사번, 이름, 급여를 조회
+SELECT e.EMPNO
+     , e.ENAME
+     , e.JOB
+     , e.SAL
+  FROM emp e
+ WHERE e.SAL >= 1000
+   AND e.SAL < 2000
+;
+
+---    comm 값이 0보다 큰 직원의 사번, 이름, 급여를 조회
+SELECT e.EMPNO
+     , e.ENAME
+     , e.SAL
+     , e.COMM     
+  FROM emp e
+ WHERE e.COMM > 0
+;  
+/*
+ 위의 실행 결과에서 comm 이 (null) 인 사람들의 행은 
+ 처음부터 비교대상에 들지 않음에 주의해야 한다.
+ (null) 값은 비교연산자로 비교할 수 없는 값이다.
+*/
 
 
 
