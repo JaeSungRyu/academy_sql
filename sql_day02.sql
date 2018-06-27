@@ -509,6 +509,304 @@ SELECT e.EMPNO
 ;  
 
 --- 2) 문자함수
+---- 1. INITCAP(str) : str 의 첫 글자를 대문자화 (영문인 경우)
+SELECT INITCAP('the soap') FROM dual; -- The Soap
+SELECT INITCAP('안녕하세요, 하하') FROM dual; -- 안녕하세요, 하하
+
+---- 2. LOWER(str) : str 을 소문자화 (영문인 경우)
+SELECT LOWER('MR. SCOTT MCMILLAN') "소문자로 변경" FROM dual;
+
+---- 3. UPPER(str) : str 을 대문자화 (영문인 경우)
+SELECT UPPER('lee') "성을 대문자로 변경" FROM dual;
+SELECT UPPER('sql is coooooooooooool~~!!') "씐나!" FROM dual;
+
+---- 4. LENGTH(str), LENGTHB(str) : str 의 글자길이, 글자의 byte를 계산
+SELECT LENGTH('hello, sql') as "글자 길이" FROM dual;
+SELECT 'hello, sql의 글자 길이는 ' || LENGTH('hello, sql') 
+                                   || '입니다.' as "글자 길이" 
+  FROM dual;
+
+-- oracle 에서 한글은 3byte 로 계산
+SELECT LENGTHB('hello, sql') as "글자 byte" FROM dual;
+SELECT LENGTHB('오라클') as "글자 byte" FROM dual;
+
+---- 5. CONCAT(str1, str2) : str1, str2 문자열을 접합, || 연산자와 동일
+SELECT CONCAT('안녕하세요, ', 'SQL') FROM dual;
+SELECT '안녕하세요, ' || 'SQL' FROM dual;
+
+---- 6. SUBSTR(str, i, n) : str 에서 i번째 위치에서 n개의 글자를 추출
+--      SQL 에서 문자열 인덱스를 나타내는 i는 1부터 시작에 주의함!
+SELECT SUBSTR('sql is coooooooooooool~~!!', 3, 4) FROM dual;
+--      SUBSTR(str, i) : i번째 위치에 문자열 끝까지 추출
+SELECT SUBSTR('sql is coooooooooooool~~!!', 3) FROM dual;
+
+
+---- 7. INSTR(str1, str2) : 2번째 문자열이 1번째 문자열 어디에 위치하는가
+--                          등장하는 위치를 계산
+SELECT INSTR('sql is coooooooooooool~~!!', 'is') FROM dual;
+SELECT INSTR('sql is coooooooooooool~~!!', 'ia') FROM dual;
+-- 2번째 문장이 등장하지 않으면 0으로 계산
+
+---- 8. LPAD, RPAD(str, n, c)
+--      : 입력된 str 에 대해서, 전체 글자의 자릿수를 n으로 잡고
+--        남는 공간에 왼쪽, 혹은 오른쪽으로 c 의 문자를 채워넣는다.
+SELECT LPAD('sql is cooool', 20, '!') FROM dual;
+SELECT RPAD('sql is cooool', 25, '!') FROM dual;
+
+---- 9. LTRIM, RTRIM, TRIM : 입력된 문자열의 왼쪽, 오른쪽, 양쪽 공백 제거
+SELECT '>' || LTRIM('     sql is cool   ') || '<' FROM dual;
+SELECT '>' || RTRIM('     sql is cool   ') || '<' FROM dual;
+SELECT '>' || TRIM('     sql is cool   ') || '<' FROM dual;
+
+----10. NVL(expr1, expr2), NVL2(expr1, expr2, expr3), NULLIF(expr1, expr2)
+-- nvl(expr1, expr2) : 첫번째 식의 값이 NULL 이면 두번째 식으로 대체하여 출력
+-- mgr 가 배정안된 직원의 경우 '매니저 없음' 으로 변경해서 출력
+SELECT e.EMPNO
+     , e.ENAME
+     , nvl(e.MGR, '매니저 없음') -- mgr 숫자 데이터, 변경 출력이 문자
+  FROM emp e                     -- 타입 불일치로 실행이 안됨
+;  
+---------
+SELECT e.EMPNO
+     , e.ENAME
+     , nvl(e.MGR, 0)
+  FROM emp e
+;
+---------
+SELECT e.EMPNO
+     , e.ENAME
+     , nvl(e.MGR || '', '매니저 없음') 
+     -- || 결합연산자로 '' 빈문자를 붙여서 형변환
+  FROM emp e
+;
+
+
+-- nvl2(expr1, expr2, expr3) 
+--   : 첫번째 식의 값이 NOT NULL 이면 두번째 식의 값으로 대체하여 출력
+--                      NULL 이면 세번째 식의 값으로 대체하여 출력
+
+SELECT e.EMPNO
+     , e.ENAME
+     , nvl2(e.MGR, '매니저 있음', '매니저 없음') 
+     -- || 결합연산자로 '' 빈문자를 붙여서 형변환
+  FROM emp e
+;
+
+-- nullif(expr1, expr2) 
+--   : 첫번째 식, 두번째 식의 값이 동일하면 NULL 을 출력
+--     식의 값이 다르면 첫번째 식의 값을 출력
+SELECT NULLIF('AAA', 'bbb')
+  FROM dual
+;
+
+SELECT NULLIF('AAA', 'AAA')
+  FROM dual
+;
+-- 조회된 결과 1행이 NULL 인 결과를 얻게 됨
+-- 1행이라도 NULL이 조회된 결과는 인출된 모든 행 : 0 과는 상태가 다름!
+
+
+--- 3) 날짜함수 : 날짜 출력 패턴 조합으로 다양하게 출력 가능
+SELECT sysdate FROM dual;
+
+-- TO_CHAR() : 숫자나 날짜를 문자형으로 변환
+SELECT TO_CHAR(sysdate, 'YYYY') FROM dual;
+SELECT TO_CHAR(sysdate, 'YY') FROM dual;
+SELECT TO_CHAR(sysdate, 'MM') FROM dual;
+SELECT TO_CHAR(sysdate, 'MONTH') FROM dual;
+SELECT TO_CHAR(sysdate, 'MON') FROM dual;
+SELECT TO_CHAR(sysdate, 'DD') FROM dual;
+SELECT TO_CHAR(sysdate, 'D') FROM dual;
+SELECT TO_CHAR(sysdate, 'DAY') FROM dual;
+SELECT TO_CHAR(sysdate, 'DY') FROM dual;
+
+-- 패턴을 조합
+SELECT TO_CHAR(sysdate, 'YYYY-MM-DD') FROM dual;
+SELECT TO_CHAR(sysdate, 'FMYYYY-MM-DD') FROM dual;
+SELECT TO_CHAR(sysdate, 'YY-MONTH-DD') FROM dual;
+SELECT TO_CHAR(sysdate, 'YY-MONTH-DD DAY') FROM dual;
+SELECT TO_CHAR(sysdate, 'YY-MONTH-DD DY') FROM dual;
+
+/* 시간 패턴 :
+    HH : 시간을 두자리로 표기
+    MI : 분을 두자리로 표기
+    SS : 초를 두자리로 표기
+    HH24 : 시간을 24시간 체계로 표기
+    AM : 오전인지 오후인지 표기
+*/
+
+SELECT TO_CHAR(sysdate, 'YYYY-MM-DD HH24:MI:SS') FROM dual;
+SELECT TO_CHAR(sysdate, 'YYYY-MM-DD AM HH:MI:SS') FROM dual;
+
+-- 날짜 값과 숫자의 연산 : +, - 연산 가능
+-- 10일 후
+SELECT sysdate + 10 FROM dual;
+-- 10일 전
+SELECT sysdate - 10 FROM dual;
+-- 10시간 후
+SELECT sysdate + (10/24) FROM dual;
+SELECT TO_CHAR(sysdate + (10/24), 'YY-MM-DD HH24:MI:SS')FROM dual;
+
+---- 1. MONTHS_BETWEEN(날짜1, 날짜2) : 두 날짜 사이의 달의 차이
+SELECT MONTHS_BETWEEN(SYSDATE, e.HIREDATE) 
+  FROM emp e;
+
+---- 2. ADD_MONTHS(날짜1, 숫자) : 날짜1에 숫자 만큼 더한 후의 날짜를 구함
+SELECT ADD_MONTHS(sysdate, 3) FROM dual;
+
+---- 3. NEXT_DAY, LAST_DAY : 다음 요일에 해당하는 날짜 구함, 이 달의 마지막 날짜
+SELECT NEXT_DAY(sysdate, '일요일') FROM dual;-- 요일을 문자로 입력했을 때
+SELECT NEXT_DAY(sysdate, 1) FROM dual;       -- 요일을 숫자로 입력해도 작동
+SELECT LAST_DAY(sysdate) FROM dual;
+
+---- 4. ROUND, TRUNC : 날짜 관련 반올림, 버림
+SELECT ROUND(sysdate) FROM dual;
+SELECT TO_CHAR(ROUND(sysdate), 'YYYY-MM-DD HH24:MI:SS') FROM dual;
+SELECT TRUNC(sysdate) FROM dual;
+SELECT TO_CHAR(TRUNC(sysdate), 'YYYY-MM-DD HH24:MI:SS') FROM dual;
+
+--- 4) 데이터 타입 변환 함수 
+/*
+  TO_CHAR()    : 숫자, 날짜       ===> 문자
+  TO_DATE()    : 날짜 형식의 문자 ===> 날짜
+  TO_NUMBER()  : 숫자로만 구성된 문자데이터 ===> 숫자
+*/
+
+---- 1. TO_CHAR() : 숫자패턴 적용
+--    숫자패턴 : 9 ==> 한자리 숫자
+SELECT TO_CHAR(12345, '9999') FROM dual;
+SELECT TO_CHAR(12345, '99999') FROM dual;
+
+SELECT e.EMPNO
+     , TO_CHAR(e.SAL) sal
+  FROM emp e
+;
+-- 숫자를 문자화 하여 출력 
+SELECT TO_CHAR(12345, '99999999') data
+  FROM dual;
+-- 앞에 빈칸을 0으로 채우기
+SELECT TO_CHAR(12345, '09999999') data
+  FROM dual;
+-- 소수점 이하 표현
+SELECT TO_CHAR(12345, '9999999.99') data
+  FROM dual;
+-- 숫자 패턴에서 3자리씩 끊어 읽기 + 소수점 이하 표현
+SELECT TO_CHAR(12345, '9,999,999.99') data
+  FROM dual;
+
+---- 2. TO_DATE() : 날짜 패턴에 맞는 문자 값을 날짜 데이터로 변경
+SELECT TO_DATE('2018-06-27', 'YYYY-MM-DD') today FROM dual;
+SELECT '2018-06-27' today FROM dual;
+
+SELECT TO_DATE('2018-06-27', 'YYYY-MM-DD') + 10 today FROM dual;
+-- 10 후의 날짜 연산 결과 얻음 : 18/07/07
+SELECT '2018-06-27' + 10 today FROM dual;
+--ORA-01722: invalid number ==> '2018-06-27' 문자 + 숫자 10의 연산 불가능
+
+---- 3. TO_NUMBER() : 오라클이 자동 형변환을 제공하므로 자주 사용은 안됨
+SELECT '1000' + 10 result FROM dual;
+SELECT TO_NUMBER('1000') + 10 result FROM dual;
+
+--- 5) DECODE(expr, search, result [,search, result].. [, default])
+/*
+   만약에 default 가 설정이 안되었고
+   expr 과 일치하는 search가 없는 경우 null 을 리턴
+*/
+SELECT DECODE('YES' -- expr
+             ,'YES', '입력값이 YES 입니다.'-- search, result 세트1
+             ,'NO', '입력값이 NO 입니다.'  -- search, result 세트2
+             ) as result
+  FROM dual
+;
+
+SELECT DECODE('NO' -- expr
+             ,'YES', '입력값이 YES 입니다.'-- search, result 세트1
+             ,'NO', '입력값이 NO 입니다.'  -- search, result 세트2
+             ) as result
+  FROM dual
+;
+
+SELECT DECODE('예' -- expr
+             ,'YES', '입력값이 YES 입니다.'-- search, result 세트1
+             ,'NO', '입력값이 NO 입니다.'  -- search, result 세트2
+             ) as result
+  FROM dual
+;
+-- >> expr 과 일치하는 search 가 없고, default 설정도 안되었을 때
+--    결과가 <인출된 모든 행 : 0> 이 아닌 NULL 이라는 것 확인
+
+SELECT DECODE('예' -- expr
+             ,'YES', '입력값이 YES 입니다.'-- search, result 세트1
+             ,'NO', '입력값이 NO 입니다.'  -- search, result 세트2
+             ,'입력값이 YES/NO 중 어느것도 아닙니다.') as result
+  FROM dual
+;
+
+-- emp 테이블의 hiredate 의 입사년도를 추출하여 몇년 근무했는지를 계산
+-- 장기근속 여부를 판단
+-- 1) 입사년도 추출 : 날짜 패턴
+SELECT e.EMPNO
+     , e.ENAME
+     , TO_CHAR(e.HIREDATE, 'YYYY') hireyear
+  FROM emp e
+;
+-- 2) 몇년근무 판단 : 오늘 시스템 날짜와 연산
+SELECT e.EMPNO
+     , e.ENAME
+     , TO_CHAR(sysdate, 'YYYY') - TO_CHAR(e.HIREDATE, 'YYYY') "근무햇수"
+  FROM emp e
+;
+
+-- 3) 37년 이상 된 직원을 장기 근속으로 판단
+SELECT a.EMPNO
+     , a.ENAME
+     , a.workingyear
+     , DECODE(a.workingyear -- expr
+             ,37, '장기 근속자 입니다.' -- search, result 1
+             ,38, '장기 근속자 입니다.' -- searhc, result 2
+             ,'장기 근속자가 아닙니다.') as "장기 근속 여부"-- defautl
+  FROM (SELECT e.EMPNO
+             , e.ENAME
+             , TO_CHAR(sysdate, 'YYYY') - TO_CHAR(e.HIREDATE, 'YYYY') workingyear
+          FROM emp e) a
+;
+
+-- job별로 경조사비를 급여대비 일정 비율로 지급하고 있다.
+-- 각 직원들의 경조사비 지원금을 구하자
+/*
+    CLERK       : 8%
+    SALESMAN    : 4%
+    MANAGER     : 3.7%
+    ANALYST     : 3%
+    PRESIDENT   : 1.5%
+*/
+SELECT e.EMPNO
+     , e.ENAME
+     , e.JOB
+     , DECODE(e.JOB  -- expr
+             ,'CLERK', e.SAL * 0.05 -- search, result
+             ,'SALESMAN', e.SAL * 0.04
+             ,'MANAGER', e.SAL * 0.037
+             ,'ANALYST', e.SAL * 0.03
+             ,'PRESIDENT', e.SAL * 0.015) "경조사비 지원금"
+  FROM emp e
+;
+
+-- 출력 결과에 숫자 패턴 적용
+SELECT e.EMPNO
+     , e.ENAME
+     , e.JOB
+     , TO_CHAR(DECODE(e.JOB  -- expr
+                     ,'CLERK', e.SAL * 0.05 -- search, result
+                     ,'SALESMAN', e.SAL * 0.04
+                     ,'MANAGER', e.SAL * 0.037
+                     ,'ANALYST', e.SAL * 0.03
+                     ,'PRESIDENT', e.SAL * 0.015), '$999.99') "경조사비 지원금"
+  FROM emp e
+;
+
+
+
 
 
 
