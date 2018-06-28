@@ -315,3 +315,363 @@ SELECT e.JOB
 FROM emp e
 GROUP BY e.JOB
 ;
+----
+SELECT nvl(e.JOB,'직무미배정')
+      ,SUM(e.SAL) "급여총합"
+      ,AVG(e.SAL) "급여평균"
+      ,MAX(e.SAL) "최대급여"
+      ,MIN(e.SAL) "최소급여"
+FROM emp e
+GROUP BY e.JOB
+;
+
+--부서 미배정이어서 NULL데이터는 부서번호대신 '미배정'이라고 분류
+SELECT NVL(e.deptno||'','미배정')
+      ,TO_CHAR(SUM(e.SAL),'99,999.00') "급여총합"
+      ,TO_CHAR(AVG(e.SAL),'99,999.00') "급여평균"
+      ,TO_CHAR(MAX(e.SAL),'99,999.00') "최대급여"
+      ,TO_CHAR(MIN(e.SAL),'99,999.00') "최소급여"
+FROM emp e
+GROUP BY e.DEPTNO
+ORDER BY e.DEPTNO
+;
+--------
+SELECT DECODE(NVL(e.deptno,0),
+              e.DEPTNO,e.DEPTNO||''
+             ,'미배정')부서번호
+      ,TO_CHAR(SUM(e.SAL),'99,999.00') "급여총합"
+      ,TO_CHAR(AVG(e.SAL),'99,999.00') "급여평균"
+      ,TO_CHAR(MAX(e.SAL),'99,999.00') "최대급여"
+      ,TO_CHAR(MIN(e.SAL),'99,999.00') "최소급여"
+FROM emp e
+GROUP BY e.DEPTNO
+ORDER BY e.DEPTNO
+;
+
+----4.HAVING절의 사용
+--GROUP BY 결과에 조건을 걸어서
+--결과를 제한(필터링) 할 목적으로 사용되는 절
+
+--문제)부서별 급여평균이 2000인 부서 
+--a)부서별 급여 평균구함
+SELECT e.deptno
+      ,TO_CHAR(AVG(e.SAL),'99,999.00') "급여평균"
+      FROM emp e
+GROUP BY e.DEPTNO 
+ORDER BY e.DEPTNO
+;
+--b)a의 결과에서 2000이상인 부서만 남긴다
+SELECT e.deptno
+      ,TO_CHAR(AVG(e.SAL),'99,999.00') "급여평균"
+      FROM emp e
+GROUP BY e.DEPTNO 
+HAVING AVG(e.SAL) >= 2000
+ORDER BY e.DEPTNO
+;
+
+SELECT e.deptno
+      ,TO_CHAR(AVG(e.SAL),'99,999.00') "급여평균"
+      FROM emp e
+GROUP BY e.DEPTNO 
+HAVING "급여평균" >= 2000
+ORDER BY e.DEPTNO
+;
+--HAVING절을 사용하여 조건을 걸때 주의할 점 : 별칭을 쓸 수 없음
+-- HAVING 절이 존재하는 경우 SELECT의 구문의 실행 순서 정리
+/*
+1. FROM 절의 테이블 각 행을 대상으로
+2. WHERE 절의 조건에 맞는 행만 선택하고
+3. GROUP BY 졸에 나온 컬럼, 식(함수 식등)으로 그룹화를 진행
+4. HAVING절의 조건을 만족시키는 그룹행만 선택
+5. 4까지 선택된 그룹 정보를 가진 행에 대해서
+   SELECT 절에 명시된 컬럼, 식(함수 식)등만 출력
+6. ORDER BY 가 있다면 정렬 조건에 맞추어 최종 정렬하여 보여준다.
+*/
+
+
+
+
+--수업중 실습
+--1.매니저별,부하직원의 수를 구하고, 많은 순으로 정렬
+SELECT e.MGR
+      ,COUNT(e.MGR)
+ FROM emp e
+ WHERE e.MGR IS NOT NULL
+ GROUP by e.MGR
+ ORDER BY count(*) desc
+ ;
+
+
+--2.부서별 인원 수을 구하고, 인원수 많은 순으로 정렬
+SELECT e.DEPTNO
+      ,COUNT(*)
+ FROM emp e
+ GROUP BY deptno
+ ORDER BY count(*) desc;
+
+--3.직무별 급여 평균을 구하고, 급여평균 높은 순으로 정렬
+SELECT e.JOB "직무"
+      ,AVG(e.SAL) "평균급여"
+ FROM emp e
+ GROUP BY job
+ ORDER BY "평균급여" desc
+ ;
+
+
+--4.직무별 급여총합을 구하고 높은 순으로 정렬
+SELECT e.DEPTNO
+      ,SUM(e.SAL) "급여총합"
+ FROM emp e
+ GROUP BY deptno
+ ORDER BY "급여총합" desc
+ ;
+
+--5.급여의 앞 단위가 1000이하,1000,2000,3000,4000,5000별로 인원수를 구하시오
+--  급여단위 오름차순 정렬
+
+--a)급여 단위를 어떻게 구할것인가? TRUNC()활용
+SELECT e.EMPNO
+      ,e.ENAME
+      ,TRUNC(e.SAL,-3) as "급여단위"
+    FROM emp e
+    ;
+--b)TRUNC로 얻어낸 급여단위를 COUNT 하면 인원를 구할 수 있다.
+SELECT TRUNC(e.SAL,-3) as "급여단위"
+      ,COUNT(TRUNC(e.SAL,-3)) "인원수" 
+    FROM emp e
+    GROUP BY TRUNC(e.SAL,-3)
+    ORDER BY "급여단위" desc
+    ;
+--c)급여단위가 1000미만인 경우 0으로 출력되는 것을 변경
+--  :범위 연산이 필요해 보임 ==>CASE구문 선택
+SELECT CASE WHEN TRUNC(e.SAL,-3) < 1000 THEN '1000미만'
+            ELSE TRUNC(e.SAL,-3)||''
+       END as "급여단위"
+       ,COUNT(TRUNC(e.SAL,-3)) "인원수" 
+    FROM emp e
+    GROUP BY TRUNC(e.SAL,-3)
+    ORDER BY TRUNC(e.SAL,-3) desc
+    ;
+--5번을 다른 방법으로 풀이
+--a)sal 컬럼에 왼쪽으로 패딩을 붙여서 0을 채움
+SELECT e.EMPNO
+      ,e.ENAME
+      ,LPAD(e.SAL,4,'0')
+ FROM emp e
+;
+--b) 맨 앞의 글자를 잘라낸다.
+SELECT e.EMPNO
+      ,e.ENAME
+      ,SUBSTR(LPAD(e.SAL,4,'0'),1,1)
+ FROM emp e
+;
+--C) COUNT + 그룹화
+SELECT SUBSTR(LPAD(e.SAL,4,'0'),1,1)
+      ,COUNT(*) "인원명"
+ FROM emp e
+ GROUP BY  SUBSTR(LPAD(e.SAL,4,'0'),1,1)
+ ;
+--D)1000단위로 출력 형태 변경
+SELECT CASE WHEN SUBSTR(LPAD(e.SAL,4,'0'),1,1) = 0 THEN '1000미만'
+            WHEN SUBSTR(LPAD(e.SAL,4,'0'),1,1) = 1 THEN '1000'
+            WHEN SUBSTR(LPAD(e.SAL,4,'0'),1,1) = 2 THEN '2000'
+            WHEN SUBSTR(LPAD(e.SAL,4,'0'),1,1) = 3 THEN '3000'
+            WHEN SUBSTR(LPAD(e.SAL,4,'0'),1,1) = 4 THEN '4000'
+            WHEN SUBSTR(LPAD(e.SAL,4,'0'),1,1) = 5 THEN '5000'
+            END "급여단위"
+           ,COUNT(*) "인원명"
+ FROM emp e
+ GROUP BY SUBSTR(LPAD(e.SAL,4,'0'),1,1)
+ ORDER BY SUBSTR(LPAD(e.SAL,4,'0'),1,1) desc
+;
+
+--6.직무별 급여 합의 단위를 구하고,급여 합의 단위가 큰 순으로 정렬
+
+--a)JOB별로 급여의 합을 구함
+SELECT  e.JOB
+       ,SUM(e.SAL)
+ FROM emp e
+ GROUP BY e.JOB
+;
+--b)
+SELECT  nvl(e.JOB,'미배정') "직무"
+       ,TRUNC(SUM(e.SAL),-3) as "급여단위"
+ FROM emp e
+ GROUP BY e.JOB
+ ORDER BY  "급여단위" desc
+;
+
+--7.직무별 급여 평균이 2000이하인 경우를 구하고 평균이 높은 순으로 정렬
+SELECT e.JOB
+      ,TO_CHAR(AVG(e.SAL),'$9,999.00') "급여평균"
+    FROM emp e
+    GROUP BY e.JOB
+    HAVING AVG(e.SAL) <= 2000
+    ORDER BY "급여평균" desc
+;
+
+--8.년도별 입사인원을 구하시오
+SELECT  
+        TO_CHAR(e.HIREDATE,'YYYY') as "입사년도"
+       ,count(*)
+  FROM emp e
+ GROUP BY TO_CHAR(e.HIREDATE,'YYYY')
+ ORDER BY "입사년도" asc
+    ;
+
+--9.년도별 원별 입사 인원을 구하시오
+SELECT  
+        TO_CHAR(e.HIREDATE,'YYYY-MM')
+       ,count(*)
+    FROM emp e
+    GROUP BY TO_CHAR(e.HIREDATE,'YYYY-MM')
+    ORDER BY TO_CHAR(e.HIREDATE,'YYYY-MM');
+    ;
+--a)두 가지 그룹화 기준 적용된 구문 작성
+SELECT TO_CHAR(e.HIREDATE,'YYYY') "입사년도"
+      ,TO_CHAR(e.HIREDATE,'MM')   "입사 월"
+      ,COUNT(*)                 "인원(명)"
+  FROM emp e
+ GROUP BY TO_CHAR(e.HIREDATE,'YYYY'),TO_CHAR(e.HIREDATE,'MM')
+ ORDER BY "입사년도","입사 월"
+;
+-------------
+--년도별,월별 입사 인원을 가로 표 형태로 출력
+--a)년도 추출 ,월 추출
+       TO_CHAR(e.HIREDATE,'YYYY') "입사년도"
+      ,TO_CHAR(e.HIREDATE,'MM')   "입사 월"
+--b)hiredate에서 월을 추출한 값이 01이 나오면 그 때의 숫자만 1월에서 카운트
+--  이 과정을 12월까지 반복
+SELECT 
+       TO_CHAR(e.HIREDATE,'YYYY') "입사년도" --그룹화 기준 컬럼
+      ,DECODE(TO_CHAR(e.HIREDATE,'MM'),01,1) "1월"
+      ,DECODE(TO_CHAR(e.HIREDATE,'MM'),02,1) "2월"
+      ,DECODE(TO_CHAR(e.HIREDATE,'MM'),03,1) "3월"
+      ,DECODE(TO_CHAR(e.HIREDATE,'MM'),04,1) "4월"
+      ,DECODE(TO_CHAR(e.HIREDATE,'MM'),05,1) "5월" 
+      ,DECODE(TO_CHAR(e.HIREDATE,'MM'),06,1) "6월"
+      ,DECODE(TO_CHAR(e.HIREDATE,'MM'),07,1) "7월"
+      ,DECODE(TO_CHAR(e.HIREDATE,'MM'),08,1) "8월"
+      ,DECODE(TO_CHAR(e.HIREDATE,'MM'),09,1) "9월"
+      ,DECODE(TO_CHAR(e.HIREDATE,'MM'),10,1) "10월"
+      ,DECODE(TO_CHAR(e.HIREDATE,'MM'),11,1) "11월"
+      ,DECODE(TO_CHAR(e.HIREDATE,'MM'),12,1) "12월"
+  FROM emp e
+  ORDER BY "입사년도"
+;
+--C)입사 년도 기준으로 COUNT 함수 결과를 그룹화
+SELECT 
+       TO_CHAR(e.HIREDATE,'YYYY') "입사년도" --그룹화 기준 컬럼
+      ,COUNT(DECODE(TO_CHAR(e.HIREDATE,'MM'),'01',1)) "1월"
+      ,COUNT(DECODE(TO_CHAR(e.HIREDATE,'MM'),'02',1)) "2월"
+      ,COUNT(DECODE(TO_CHAR(e.HIREDATE,'MM'),'03',1)) "3월"
+      ,COUNT(DECODE(TO_CHAR(e.HIREDATE,'MM'),'04',1)) "4월"
+      ,COUNT(DECODE(TO_CHAR(e.HIREDATE,'MM'),'05',1)) "5월" 
+      ,COUNT(DECODE(TO_CHAR(e.HIREDATE,'MM'),'06',1)) "6월"
+      ,COUNT(DECODE(TO_CHAR(e.HIREDATE,'MM'),'07',1)) "7월"
+      ,COUNT(DECODE(TO_CHAR(e.HIREDATE,'MM'),'08',1)) "8월"
+      ,COUNT(DECODE(TO_CHAR(e.HIREDATE,'MM'),'09',1)) "9월"
+      ,COUNT(DECODE(TO_CHAR(e.HIREDATE,'MM'),'10',1)) "10월"
+      ,COUNT(DECODE(TO_CHAR(e.HIREDATE,'MM'),'11',1)) "11월"
+      ,COUNT(DECODE(TO_CHAR(e.HIREDATE,'MM'),'12',1)) "12월"
+      FROM emp e
+      GROUP BY TO_CHAR(e.HIREDATE,'YYYY')
+  ORDER BY "입사년도" DESC
+;
+
+SELECT '인원 명' AS "입사월"
+      ,COUNT(DECODE(TO_CHAR(e.HIREDATE,'MM'),'01',1)) "1월"
+      ,COUNT(DECODE(TO_CHAR(e.HIREDATE,'MM'),'02',1)) "2월"
+      ,COUNT(DECODE(TO_CHAR(e.HIREDATE,'MM'),'03',1)) "3월"
+      ,COUNT(DECODE(TO_CHAR(e.HIREDATE,'MM'),'04',1)) "4월"
+      ,COUNT(DECODE(TO_CHAR(e.HIREDATE,'MM'),'05',1)) "5월" 
+      ,COUNT(DECODE(TO_CHAR(e.HIREDATE,'MM'),'06',1)) "6월"
+      ,COUNT(DECODE(TO_CHAR(e.HIREDATE,'MM'),'07',1)) "7월"
+      ,COUNT(DECODE(TO_CHAR(e.HIREDATE,'MM'),'08',1)) "8월"
+      ,COUNT(DECODE(TO_CHAR(e.HIREDATE,'MM'),'09',1)) "9월"
+      ,COUNT(DECODE(TO_CHAR(e.HIREDATE,'MM'),'10',1)) "10월"
+      ,COUNT(DECODE(TO_CHAR(e.HIREDATE,'MM'),'11',1)) "11월"
+      ,COUNT(DECODE(TO_CHAR(e.HIREDATE,'MM'),'12',1)) "12월"
+      FROM emp e
+;
+
+-----7.조인과 서브쿼리
+--(1)조인:JOIN
+--하나 이상의 테이블을 논리적으로 묶어서 하나의 테이블 인 것 처럼 다루는 기술
+--FROM절에 조인이 사용할 테이블 이름을 나열
+--문제) 직원의 소속 부서 번호가 아닌,부서 명을 알고 싶다.
+--a)from절에 emp,dept 두 테이블을 나열 ==> 조인 발생 ==>카티션 곱 ==> 두 테이블의 모든 조합
+SELECT e.ENAME
+      ,d.DNAME
+  FROM emp e
+      ,dept d
+;
+--16*4 = 64건의 데이터조회
+
+
+SELECT e.ENAME
+      ,d.DNAME
+  FROM emp e
+      ,dept d
+ WHERE e.DEPTNO = d.DEPTNO --오라클의 전통적인 조인 조건 작성기법
+  ORDER BY d.DEPTNO
+;
+SELECT e.ENAME
+      ,d.DNAME
+  FROM emp e join dept d ON (d.DEPTNO = e.DEPTNO)  --최근 사용하는 기법  
+;
+--조인 조건이 적절히 추가되어 12행의 의미 있는 데이터만 남김
+--문제)위의 결과에서 ACCOUNTING 부서의 직원만 알고 있다.
+--    조인 조건과 일반 조건이 같이 사용될 수 있다.
+SELECT e.ENAME
+      ,d.DNAME
+  FROM emp e
+      ,dept d
+ WHERE e.DEPTNO = d.DEPTNO --오라클의 전통적인 조인 조건 작성기법
+  AND d.DNAME = 'ACCOUNTING'
+  ORDER BY d.DEPTNO
+;
+
+----2)조인 : 카티션 곱
+--          조인대상 테이블의 데이터를 가능한 모든 경우로 엮는 것
+--          조인조건 누락시 발생
+--          ORACLE 9i 버전 이후 CROSS JOIN 키워드 지원
+SELECT e.ENAME
+      ,d.DNAME
+      ,s.grade
+FROM emp e CROSS JOIN dept d
+           CroSS JOIN salgrade s
+           ;
+SELECT e.ENAME
+      ,d.DNAME
+      ,s.GRADE
+FROM emp e
+    ,dept d
+    ,salgrade s
+;
+--(2)서브쿼리
+
+-----1.오라클 전통적인 WHERE에 조인 조건 작성 방법
+SELECT e.ENAME
+      ,d.DNAME
+  FROM emp e
+      ,dept d
+ WHERE e.DEPTNO = d.DEPTNO --오라클의 전통적인 조인 조건 작성기법
+  ORDER BY d.DEPTNO
+;
+------2.NATURAL JOIN키워드로 자동 조인
+SELECT e.ENAME
+      ,d.DNAME
+  FROM emp e NATURAL JOIN dept d  --조인 공통 컬럼 명시가 필요없다
+;
+-----3.JOIN ~USING 키워드로 조인
+SELECT e.ENAME
+      ,d.DNAME
+  FROM emp e JOIN dept d USING (deptno) --조인 공통 컬럼 명시가 필요없다
+;
+-----4.JOIN ON 키워드로 조인
+SELECT e.ENAME
+      ,d.DNAME
+  FROM emp e JOIN dept d ON (e.DEPTNO = d.DEPTNO) --조인 공통 컬럼 명시가 필요없다;
+
+
