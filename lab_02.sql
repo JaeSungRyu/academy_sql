@@ -143,4 +143,3 @@ SELECT NVL(e.DEPTNO||'','미지정') "부서번호"
   GROUP BY e.DEPTNO,e.JOB
   ORDER BY e.DEPTNO asc,e.JOB desc 
 ;
-
